@@ -3,6 +3,7 @@ package lk.directpay.company.controller;
 import lk.directpay.company.auth.AuthenticationRequest;
 import lk.directpay.company.auth.AuthenticationResponse;
 import lk.directpay.company.auth.RegisterRequest;
+import lk.directpay.company.exception.InvalidRequestException;
 import lk.directpay.company.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,11 +21,19 @@ public class UserController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthenticationResponse> register (@RequestBody RegisterRequest request){
-        return ResponseEntity.ok(service.register(request));
+        try {
+            return ResponseEntity.ok(service.register(request));
+        }catch(InvalidRequestException e){
+            return ResponseEntity.badRequest().body(new AuthenticationResponse(e.getMessage()));
+        }
     }
 
     @PostMapping("/authenticate")
     public ResponseEntity<AuthenticationResponse> authenticate (@RequestBody AuthenticationRequest request){
-        return ResponseEntity.ok(service.authenticate(request));
+        try {
+            return ResponseEntity.ok(service.authenticate(request));
+        }catch(InvalidRequestException e){
+            return ResponseEntity.badRequest().body(new AuthenticationResponse(e.getMessage()));
+        }
     }
 }
