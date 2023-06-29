@@ -20,19 +20,21 @@ public class UserController {
     private final UserService service;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthenticationResponse> register (@RequestBody RegisterRequest request){
+    public ResponseEntity<AuthenticationResponse> register(@RequestBody RegisterRequest request) {
         try {
-            return ResponseEntity.ok(service.register(request));
-        }catch(InvalidRequestException e){
+            AuthenticationResponse response = service.register(request);
+            return ResponseEntity.ok(response);
+        } catch (InvalidRequestException e) {
             return ResponseEntity.badRequest().body(new AuthenticationResponse(e.getMessage()));
         }
     }
 
     @PostMapping("/authenticate")
-    public ResponseEntity<AuthenticationResponse> authenticate (@RequestBody AuthenticationRequest request){
+    public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {
         try {
-            return ResponseEntity.ok(service.authenticate(request));
-        }catch(InvalidRequestException e){
+            AuthenticationResponse response = service.authenticate(request);
+            return ResponseEntity.ok(response);
+        } catch (InvalidRequestException e) {
             return ResponseEntity.badRequest().body(new AuthenticationResponse(e.getMessage()));
         }
     }

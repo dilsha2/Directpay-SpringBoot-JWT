@@ -1,6 +1,7 @@
 package lk.directpay.company.filters;
 
 import lk.directpay.company.exception.CustomInvalidTokenException;
+import lk.directpay.company.exception.InvalidRequestException;
 import lk.directpay.company.services.JwtService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             final String jwt;
             final String userEmail;
 
+
+
             if (authHeader == null || !authHeader.startsWith("Bearer")) {
                 filterChain.doFilter(request, response);
                 return;
@@ -56,6 +59,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     );
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                }else{
+                    throw new CustomInvalidTokenException("Invalid token Provided");
                 }
             }
 
