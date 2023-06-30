@@ -29,17 +29,21 @@ public class SecurityConfiguration {
                 .disable()
                 .authorizeHttpRequests()
                 .antMatchers("/api/v1/auth/**")
+//                .hasAuthority("merchant_api_access_token")
+//                .authenticated()
+//                .permitAll()
+//                .anyRequest()
                 .permitAll()
-                .anyRequest()
-                .authenticated()
+//                .authenticated()
                 .and()
                 .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.NEVER)
-                .and()
-                .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .sessionCreationPolicy(SessionCreationPolicy.NEVER);
+//                .and()
+//                .authenticationProvider(authenticationProvider)
+                http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
-        return http.build();
+                return http.build();
+
     }
 
     @Bean

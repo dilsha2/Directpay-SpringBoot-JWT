@@ -42,8 +42,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 
             if (authHeader == null || !authHeader.startsWith("Bearer")) {
-                filterChain.doFilter(request, response);
-                return;
+               throw new CustomInvalidTokenException("Invalid authorization header");
             }
 
             jwt = authHeader.substring(7);
