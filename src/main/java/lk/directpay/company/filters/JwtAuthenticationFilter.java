@@ -1,12 +1,10 @@
 package lk.directpay.company.filters;
 
-import lk.directpay.company.exception.CustomInvalidTokenException;
-import lk.directpay.company.exception.InvalidRequestException;
 import lk.directpay.company.services.JwtService;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -28,46 +26,49 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserDetailsService userDetailsService;
 
     @Override
-    protected void doFilterInternal
-            (@NonNull HttpServletRequest request,
-             @NonNull HttpServletResponse response,
-             @NonNull FilterChain filterChain)
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain)
             throws ServletException, IOException {
-
         try {
-            final String authHeader = request.getHeader("Authorization");
-            final String jwt;
-            final String userEmail;
+//            authenticateRequest(request);
+            String authHeader = request.getHeader("Authorization");
 
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String jwt = authHeader.substring(7);
+                String userEmail;
+                try {
+                    userEmail = jwtService.extractUsername(jwt);
+                } catch (Exception ex) {
+                    throw new AuthenticationServiceException("Invalid JWT token", ex);
+                }
 
+                if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    UserDetails userDetails;
+                    try {
+                        userDetails = userDetailsService.loadUserByUsername(userEmail);
+                    } catch (Exception ex) {
+                        throw new AuthenticationServiceException("User not found", ex);
+                    }
 
-            if (authHeader == null || !authHeader.startsWith("Bearer")) {
-               throw new CustomInvalidTokenException("Invalid authorization header");
-            }
-
-            jwt = authHeader.substring(7);
-            userEmail = jwtService.extractUsername(jwt);
-
-            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
-                if (jwtService.isTokenValid(jwt, userDetails)) {
-                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            userDetails,
-                            null,
-                            userDetails.getAuthorities()
-                    );
-                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
-                }else{
-                    throw new CustomInvalidTokenException("Invalid token Provided");
+                    if (jwtService.isTokenValid(jwt, userDetails)) {
+                        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                                userDetails,
+                                null,
+                                userDetails.getAuthorities()
+                        );
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    } else {
+                        throw new AuthenticationServiceException("Invalid JWT token");
+                    }
                 }
             }
-
-            filterChain.doFilter(request, response);
-
-        } catch (CustomInvalidTokenException e) {
-            response.setStatus(HttpStatus.BAD_REQUEST.value());
-            response.getWriter().write("Invalid token provided");
+        } catch (AuthenticationException ex) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+            return;
         }
+
+        filterChain.doFilter(request, response);
     }
 }

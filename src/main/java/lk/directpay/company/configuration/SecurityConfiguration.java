@@ -22,32 +22,29 @@ public class SecurityConfiguration {
     private final AuthenticationProvider authenticationProvider;
 
     @Bean
-    public SecurityFilterChain securityFilterChain (HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
                 .csrf()
                 .disable()
                 .authorizeHttpRequests()
                 .antMatchers("/api/v1/auth/**")
-//                .hasAuthority("merchant_api_access_token")
-//                .authenticated()
-//                .permitAll()
-//                .anyRequest()
                 .permitAll()
-//                .authenticated()
+                .anyRequest()
+                .authenticated()
                 .and()
                 .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.NEVER);
-//                .and()
-//                .authenticationProvider(authenticationProvider)
-                http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .authenticationProvider(authenticationProvider)
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
-                return http.build();
+        return http.build();
 
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder(){
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 }
